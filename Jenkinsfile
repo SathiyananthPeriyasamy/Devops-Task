@@ -6,7 +6,7 @@ pipeline {
 
     environment {
 
-        TOMCAT_IP = '34.202.9.236'
+        TOMCAT_IP = '172.31.33.1'
         TOMCAT_PATH = '/var/lib/tomcat10/webapps/'
 
         IMAGE_NAME = 'fortask-app'
