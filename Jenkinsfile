@@ -91,13 +91,13 @@ stage('Run Docker Container') {
     post {
         success {
             echo 'Pipeline succeeded! Sending email...'
-            mail to: 'your-actual-email@gmail.com',
+            mail to: 'sathiyacse1@gmail.com',
                  subject: "SUCCESS: Jenkins Pipeline ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
                  body: "Great news! Your Tomcat application deployed successfully.\n\nView the run details here: ${env.BUILD_URL}"
         }
         failure {
             echo 'Pipeline failed! Sending email...'
-            mail to: 'your-actual-email@gmail.com',
+            mail to: 'sathiyacse1@gmail.com',
                  subject: "FAILED: Jenkins Pipeline ${env.JOB_NAME} [${env.BUILD_NUMBER}]",
                  body: "Uh oh. Something went wrong during the build or deployment.\n\nPlease check the Jenkins console logs here: ${env.BUILD_URL}"
         }
