@@ -1,46 +1,110 @@
 pipeline {
+
     agent {
-        // This forces the job to run on Node 2 using the label we set up!
-        label 'node2-slave' 
+        label 'docker-slave'
     }
 
     environment {
-        // We will configure this credential in the Jenkins UI in Phase 4
-        DOCKERHUB_CREDS = credentials('dockerhub-credentials')
-        
-        // IMPORTANT: Change 'your-dockerhub-username' to your actual DockerHub username!
-        IMAGE_NAME = "sathiyananth/tomcat-hello-world" 
+
+        TOMCAT_IP = '34.202.9.236'
+        TOMCAT_PATH = '/var/lib/tomcat10/webapps/'
+
+        IMAGE_NAME = 'fortask-app'
+        CONTAINER_NAME = 'fortask-container'
     }
 
     stages {
-        stage('Checkout Code') {
+
+        stage('Checkout') {
+
             steps {
-                checkout scm
+
+                git branch: 'master',
+                url: 'https://github.com/SathiyananthPeriyasamy/Devops-Task.git'
             }
         }
 
-        stage('Maven Build') {
+        stage('Build Maven') {
+
             steps {
-                echo 'Compiling and building the WAR file...'
-                sh 'mvn clean package'
+
+                sh 'java -version'
+                sh 'mvn -version'
+                sh 'mvn clean package -DskipTests'
+            }
+        }
+
+        stage('Verify Artifact') {
+
+            steps {
+
+                sh 'ls -lh target/'
             }
         }
 
         stage('Build Docker Image') {
+
             steps {
-                echo 'Building Docker Image from Dockerfile...'
-                sh "docker build -t ${IMAGE_NAME}:${BUILD_NUMBER} ."
-                sh "docker tag ${IMAGE_NAME}:${BUILD_NUMBER} ${IMAGE_NAME}:latest"
+
+                sh """
+                docker build -t ${IMAGE_NAME}:latest .
+                """
             }
         }
 
-        stage('Push to DockerHub') {
+        stage('Stop Old Container') {
+
             steps {
-                echo 'Logging into DockerHub and pushing image...'
-                sh "echo \$DOCKERHUB_CREDS_PSW | docker login -u \$DOCKERHUB_CREDS_USR --password-stdin"
-                sh "docker push ${IMAGE_NAME}:${BUILD_NUMBER}"
-                sh "docker push ${IMAGE_NAME}:latest"
+
+                sh """
+                docker stop ${CONTAINER_NAME} || true
+                docker rm ${CONTAINER_NAME} || true
+                """
             }
+        }
+
+        stage('Run Docker Container') {
+
+            steps {
+
+                sh """
+                docker run -d \
+                --name ${CONTAINER_NAME} \
+                -p 8090:8080 \
+                ${IMAGE_NAME}:latest
+                """
+            }
+        }
+
+        stage('Verify Container') {
+
+            steps {
+
+                sh 'docker ps'
+            }
+        }
+
+        stage('Deploy to Remote Tomcat') {
+
+            steps {
+
+                sshagent(credentials: ['ubuntu']) {
+
+                    sh """
+                    scp -o StrictHostKeyChecking=no \
+                    target/*.war \
+                    ubuntu@${TOMCAT_IP}:${TOMCAT_PATH}myapp.war
+                    """
+                }
+            }
+        }
+    }
+
+    post {
+
+        always {
+
+            echo 'Pipeline completed.'
         }
     }
 }
