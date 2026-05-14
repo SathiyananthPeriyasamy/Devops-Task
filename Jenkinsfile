@@ -1,70 +1,3 @@
-pipeline {
-
-    agent {
-        label 'docker-slave'
-    }
-
-    environment {
-
-        TOMCAT_IP = '172.31.33.1'
-        TOMCAT_PATH = '/var/lib/tomcat10/webapps/'
-
-        IMAGE_NAME = 'fortask-app'
-        CONTAINER_NAME = 'fortask-container'
-    }
-
-    stages {
-
-        stage('Checkout') {
-
-            steps {
-
-                git branch: 'master',
-                url: 'https://github.com/SathiyananthPeriyasamy/Devops-Task.git'
-            }
-        }
-
-        stage('Build Maven') {
-
-            steps {
-
-                sh 'java -version'
-                sh 'mvn -version'
-                sh 'mvn clean package -DskipTests'
-            }
-        }
-
-        stage('Verify Artifact') {
-
-            steps {
-
-                sh 'ls -lh target/'
-            }
-        }
-
-        stage('Build Docker Image') {
-
-            steps {
-
-                sh """
-                docker build -t ${IMAGE_NAME}:latest .
-                """
-            }
-        }
-
-        stage('Stop Old Container') {
-
-            steps {
-
-                sh """
-                docker stop ${CONTAINER_NAME} || true
-                docker rm ${CONTAINER_NAME} || true
-                """
-            }
-        }
-
-        stage('Run Docker Container') {
-
             steps {
 
                 sh """
@@ -98,8 +31,7 @@ pipeline {
                 }
             }
         }
-    }
-
+      }
 
     post {
         success {
@@ -121,3 +53,5 @@ pipeline {
 }
 }
 }
+}
+
